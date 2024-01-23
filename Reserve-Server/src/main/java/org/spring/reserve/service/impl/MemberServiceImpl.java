@@ -4,6 +4,7 @@ import org.spring.reserve.repository.MemberRepository;
 import org.spring.reserve.service.MemberService;
 import org.spring.reserve.vo.MemberVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,6 +14,9 @@ public class MemberServiceImpl implements MemberService {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
     public List<MemberVo> getAllMember(){
@@ -26,6 +30,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public int addMember(MemberVo memberVo) {
+        memberVo.setPassword(bCryptPasswordEncoder.encode(memberVo.getPassword()));
         return memberRepository.addMember(memberVo);
     }
 }
