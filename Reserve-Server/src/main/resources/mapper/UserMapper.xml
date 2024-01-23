@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.spring.reserve.repository.MemberRepository">
+    <select id="getAllMember" resultType="MemberVo">
+        SELECT * FROM TB_MEMBER
+    </select>
+
+    <select id="getOneMember" parameterType="MemberVo" resultType="MemberVo">
+        SELECT * FROM TB_MEMBER WHERE memberId = #{memberId}
+    </select>
+
+    <insert id="addMember" parameterType="MemberVo" useGeneratedKeys="true"  keyProperty="memberNo">
+        INSERT INTO TB_MEMBER (memberId, password, phone, name, team, status, adminYn)
+        VALUES (#{memberId}, #{password}, #{phone}, #{name}, #{team}, #{status}, #{adminYn})
+    </insert>
+</mapper>
