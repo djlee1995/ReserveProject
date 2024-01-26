@@ -7,7 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface MemberRepository {
-    List<MemberVo> getAllMember();
-    MemberVo getOneMember(MemberVo memberVo);
+    List<MemberVo> selectMember(MemberVo memberVo);
+    int selectCountMember(MemberVo memberVo);
     int addMember(MemberVo memberVo);
 }

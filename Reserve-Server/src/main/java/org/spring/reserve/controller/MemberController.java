@@ -20,19 +20,17 @@ public class MemberController {
     @Autowired
     private MemberService memberService;
 
-    @GetMapping(value="/selectAllMember")
-    public ApiResponse selectAllMember() {
+    @GetMapping(value="/selectMember")
+    public ApiResponse selectMember(MemberVo memberVo) {
 
-        List<MemberVo> memberList = memberService.getAllMember();
+        List<MemberVo> memberList = memberService.selectMember(memberVo);
 
         return ApiResponse.ok(memberList);
     }
-    @GetMapping(value="/selectOneMember")
-    public ApiResponse selectOneMember(MemberVo memberVo) {
-
-        MemberVo member = (MemberVo) memberService.getOneMember(memberVo);
-
-        return ApiResponse.ok(member);
+    @GetMapping(value="/selectCountMember")
+    public ApiResponse selectCountMember(MemberVo memberVo) {
+        int memberCount = memberService.selectCountMember(memberVo);
+        return ApiResponse.ok(memberCount);
     }
 
     @PostMapping(value="/addMember")
@@ -50,4 +48,5 @@ public class MemberController {
         }
 
     }
+
 }

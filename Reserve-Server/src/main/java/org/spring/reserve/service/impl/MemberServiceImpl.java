@@ -19,13 +19,13 @@ public class MemberServiceImpl implements MemberService {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
-    public List<MemberVo> getAllMember(){
-        return memberRepository.getAllMember();
+    public List<MemberVo> selectMember(MemberVo memberVo){
+        return memberRepository.selectMember(memberVo);
     }
 
     @Override
-    public MemberVo getOneMember(MemberVo memberVo) {
-        return memberRepository.getOneMember(memberVo);
+    public int selectCountMember(MemberVo memberVo) {
+        return memberRepository.selectCountMember(memberVo);
     }
 
     @Override
@@ -33,4 +33,5 @@ public class MemberServiceImpl implements MemberService {
         memberVo.setPassword(bCryptPasswordEncoder.encode(memberVo.getPassword()));
         return memberRepository.addMember(memberVo);
     }
+
 }
