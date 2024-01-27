@@ -1,26 +1,17 @@
 package org.spring.reserve.jwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.spring.reserve.util.ApiResponse;
 import org.spring.reserve.vo.MemberVo;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.lang.reflect.Member;
-import java.security.SignatureException;
 
 public class JWTFilter extends OncePerRequestFilter {
 
@@ -33,36 +24,38 @@ public class JWTFilter extends OncePerRequestFilter {
 
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         //request에서 Authorization 헤더를 찾음
         String authorization= request.getHeader("Authorization");
 
-        String token;
-        String memberId = null;
-        String role = null;
+        //Authorization 헤더 검증
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
 
-        // JWT 토큰은 "Beare token"에 있다. Bearer단어를 제거하고 토큰만 받는다.
-        if(authorization != null && authorization.startsWith("Bearer ")){
-            //Bearer 부분 제거 후 순수 토큰만 획득
-             token = authorization.split(" ")[1];
-            try{
-                //토큰에서 memberId role 획득
-                memberId = jwtUtil.getMemberId(token);
-                role = jwtUtil.getRole(token);
+            System.out.println("token null");
+            filterChain.doFilter(request, response);
 
-            } catch (IllegalArgumentException exception){
-                new ObjectMapper().writeValue(response.getOutputStream(), ApiResponse.error(HttpStatus.UNAUTHORIZED,"Unable to get JWT token"));
-            } catch (ExpiredJwtException exception){
-                new ObjectMapper().writeValue(response.getOutputStream(), ApiResponse.error(HttpStatus.UNAUTHORIZED,"Token is expired"));
-            } catch (MalformedJwtException exception){
-                new ObjectMapper().writeValue(response.getOutputStream(), ApiResponse.error(HttpStatus.UNAUTHORIZED,"Token is malformed"));
-            } catch (UnsupportedJwtException exception){
-                new ObjectMapper().writeValue(response.getOutputStream(), ApiResponse.error(HttpStatus.UNAUTHORIZED,"Token is unsupported"));
-            }
-        }else{
-            new ObjectMapper().writeValue(response.getOutputStream(), ApiResponse.error(HttpStatus.UNAUTHORIZED,"Authorization is null or Token does not begin with Bearer String"));
+            //조건이 해당되면 메소드 종료 (필수)
+            return;
         }
+
+        System.out.println("authorization now");
+        //Bearer 부분 제거 후 순수 토큰만 획득
+        String token = authorization.split(" ")[1];
+
+        //토큰 소멸 시간 검증
+        if (jwtUtil.isExpired(token)) {
+
+            System.out.println("token expired");
+            filterChain.doFilter(request, response);
+
+            //조건이 해당되면 메소드 종료 (필수)
+            return;
+        }
+
+        //토큰에서 memberId role 획득
+        String memberId = jwtUtil.getMemberId(token);
+        String role = jwtUtil.getRole(token);
 
         //MemberVo를 생성하여 값 set
         MemberVo memberVo = new MemberVo();
