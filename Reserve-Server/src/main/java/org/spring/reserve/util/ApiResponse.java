@@ -14,8 +14,6 @@ public class ApiResponse {
 
     private String error;
 
-    private String message;
-
     /**
      *
      */
