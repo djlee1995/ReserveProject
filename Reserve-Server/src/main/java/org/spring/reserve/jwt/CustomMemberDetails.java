@@ -48,7 +48,7 @@ public class CustomMemberDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !memberVo.getStatus().equals("J");
     }
 
     @Override
@@ -58,6 +58,6 @@ public class CustomMemberDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return memberVo.getStatus().equals("A");
     }
 }
