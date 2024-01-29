@@ -7,8 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.spring.reserve.util.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -75,7 +74,20 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     //로그인 실패시 실행하는 메소드
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException {
-
-        new ObjectMapper().writeValue(response.getOutputStream(),ApiResponse.error(HttpStatus.UNAUTHORIZED,"Failed to Login"));
+        String errorMessage;
+        if(failed instanceof BadCredentialsException){
+            errorMessage = "아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해 주세요.";
+            logger.error(failed);
+        }else if(failed instanceof LockedException){
+            errorMessage = "승인이 거절된 계정입니다. 관리자에게 문의하세요.";
+            logger.error(failed);
+        }else if(failed instanceof DisabledException){
+            errorMessage = "승인이 진행중인 계정입니다. 관리자에게 문의하세요.";
+            logger.error(failed);
+        }else{
+            errorMessage = "알 수 없는 이유로 로그인에 실패하였습니다 관리자에게 문의하세요.";
+            logger.error(failed);
+        }
+        new ObjectMapper().writeValue(response.getOutputStream(),ApiResponse.error(HttpStatus.UNAUTHORIZED, errorMessage));
     }
 }

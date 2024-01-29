@@ -22,9 +22,9 @@ public class CustomMemberDetailsService implements UserDetailsService {
         memberVo.setMemberId(username);
 
         List<MemberVo> memberData = memberRepository.selectMember(memberVo);
-        if(memberData !=null){
+        if(!memberData.isEmpty()){
             return new CustomMemberDetails(memberData.get(0));
         }
-        return null;
+        throw new UsernameNotFoundException("사용자가 없습니다.");
     }
 }
