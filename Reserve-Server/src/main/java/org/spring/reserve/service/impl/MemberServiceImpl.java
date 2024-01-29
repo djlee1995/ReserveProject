@@ -34,4 +34,20 @@ public class MemberServiceImpl implements MemberService {
         return memberRepository.addMember(memberVo);
     }
 
+    @Override
+    public boolean comparePwd(MemberVo memberVo) {
+        List<MemberVo> list = memberRepository.selectMember(memberVo);
+        if(list.size()==1){
+            MemberVo member = list.get(0);
+            return bCryptPasswordEncoder.matches(memberVo.getPassword(),member.getPassword());
+        }
+        return false;
+    }
+
+    @Override
+    public int updateMember(MemberVo memberVo) {
+        memberVo.setPassword(bCryptPasswordEncoder.encode(memberVo.getPassword()));
+        return memberRepository.updateMember(memberVo);
+    }
+
 }

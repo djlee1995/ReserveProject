@@ -10,4 +10,5 @@ public interface MemberRepository {
     List<MemberVo> selectMember(MemberVo memberVo);
     int selectCountMember(MemberVo memberVo);
     int addMember(MemberVo memberVo);
+    int updateMember(MemberVo memberVo);
 }

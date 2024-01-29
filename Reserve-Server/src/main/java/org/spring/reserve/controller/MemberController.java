@@ -40,13 +40,33 @@ public class MemberController {
             if(message == 1){
                 return ApiResponse.ok();
             }else{
-                return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,"Failed to add member");
+                log.error("No member information");
+                return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,"회원정보가 없습니다.");
             }
         }catch (Exception e) {
-            log.error("Failed to insert attach",e);
-            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,"Failed to add member");
+            log.error("Failed to insert Member",e);
+            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,"회원가입을 실패했습니다.");
         }
-
+    }
+    @GetMapping(value="/comparePwd")
+    public ApiResponse comparePwd(MemberVo memberVo) {
+        boolean comparePwd  = memberService.comparePwd(memberVo);
+        return ApiResponse.ok(comparePwd);
     }
 
+    @PostMapping(value="/updateMember")
+    public ApiResponse updateMember(MemberVo memberVo) {
+        try {
+            int message = memberService.updateMember(memberVo);
+            if(message == 1){
+                return ApiResponse.ok();
+            }else{
+                log.error("No member information");
+                return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,"회원정보가 없습니다.");
+            }
+        }catch (Exception e) {
+            log.error("Failed to update Member",e);
+            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,"회원정보 변경에 실패했습니다.");
+        }
+    }
 }

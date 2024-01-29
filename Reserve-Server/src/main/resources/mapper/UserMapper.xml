@@ -5,6 +5,15 @@
         <if test='memberId != null and memberId neq ""'>
             AND memberId = #{memberId}
         </if>
+        <if test='phone != null and phone neq ""'>
+            AND phone = #{phone}
+        </if>
+        <if test='name != null and name neq ""'>
+            AND name = #{name}
+        </if>
+        <if test='team != null and team neq ""'>
+            AND team = #{team}
+        </if>
         <if test='status != null and status neq ""'>
             AND status = #{status}
         </if>
@@ -42,4 +51,14 @@
         INSERT INTO TB_MEMBER (memberId, password, phone, name, team)
         VALUES (#{memberId}, #{password}, #{phone}, #{name}, #{team})
     </insert>
+
+    <update id="updateMember" parameterType="MemberVo">
+        UPDATE TB_MEMBER SET
+                             password = #{password},
+                             phone = #{phone},
+                             name = #{name},
+                             team = #{team},
+                             updatedAt = NOW()
+                         WHERE memberId=#{memberId}
+    </update>
 </mapper>
