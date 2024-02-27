@@ -1,27 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.spring.reserve.repository.MemberRepository">
-    <sql id="Where">
-        <if test='memberId != null and memberId neq ""'>
-            AND memberId = #{memberId}
-        </if>
-        <if test='phone != null and phone neq ""'>
-            AND phone = #{phone}
-        </if>
-        <if test='name != null and name neq ""'>
-            AND name = #{name}
-        </if>
-        <if test='team != null and team neq ""'>
-            AND team = #{team}
-        </if>
-        <if test='status != null and status neq ""'>
-            AND status = #{status}
-        </if>
-        <if test='role != null and role neq ""'>
-            AND role = #{role}
-        </if>
-    </sql>
-    <select id="selectMember" parameterType="MemberVo" resultType="MemberVo">
+    <select id="select" parameterType="String" resultType="Members">
         SELECT
             memberNo,
             memberId,
@@ -35,24 +15,20 @@
             createdAt,
             updatedAt
         FROM TB_MEMBER
-        <where>
-            <include refid="Where" />
-        </where>
+        WHERE memberId = #{memberId}
     </select>
 
-    <select id="selectCountMember" parameterType="MemberVo" resultType="int">
+    <select id="count" parameterType="String" resultType="int">
         SELECT COUNT(*) FROM TB_MEMBER
-        <where>
-            <include refid="Where" />
-        </where>
+        WHERE memberId = #{memberId}
     </select>
 
-    <insert id="addMember" parameterType="MemberVo" useGeneratedKeys="true"  keyProperty="memberNo">
+    <insert id="insert" parameterType="Members" useGeneratedKeys="true"  keyProperty="memberNo">
         INSERT INTO TB_MEMBER (memberId, password, phone, name, team)
         VALUES (#{memberId}, #{password}, #{phone}, #{name}, #{team})
     </insert>
 
-    <update id="updateMember" parameterType="MemberVo">
+    <update id="update" parameterType="Members">
         UPDATE TB_MEMBER SET
                              password = #{password},
                              phone = #{phone},
@@ -61,4 +37,8 @@
                              updatedAt = NOW()
                          WHERE memberId=#{memberId}
     </update>
+
+    <delete id="delete" parameterType="String">
+        DELETE FROM TB_MEMBER WHERE memberId = #{memberId}
+    </delete>
 </mapper>
