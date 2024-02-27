@@ -1,102 +1,92 @@
 package org.spring.reserve.config;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.spring.reserve.jwt.JWTFilter;
-import org.spring.reserve.jwt.JWTUtil;
-import org.spring.reserve.jwt.LoginFilter;
+import org.spring.reserve.jwt.CustomMemberDetailsService;
+import org.spring.reserve.jwt.JwtAuthenticationFilter;
+import org.spring.reserve.jwt.JwtRequestFilter;
+import org.spring.reserve.jwt.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
-
+@Slf4j
 @Configuration
 @EnableWebSecurity
+// @preAuthorize, @postAuthorize, @Secured 활성화
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
 
+
+    @Autowired
+    private CustomMemberDetailsService customMemberDetailsService;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+
+    // 시큐리티 설정
     @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        log.info("시큐리티 설정...");
 
-        return new BCryptPasswordEncoder();
-    }
+        // 폼 기반 로그인 비활성화
+        http.formLogin(AbstractHttpConfigurer::disable);
 
-    //AuthenticationManager가 인자로 받을 AuthenticationConfiguraion 객체 생성자 주입
-    private final AuthenticationConfiguration authenticationConfiguration;
-    //JWTUtil 주입
-    private final JWTUtil jwtUtil;
+        // HTTP 기본 인증 비활성화
+        http.httpBasic(AbstractHttpConfigurer::disable);
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil) {
+        // CSRF(Cross-Site Request Forgery) 공격 방어 기능 비활성화
+        http.csrf(AbstractHttpConfigurer::disable);
 
-        this.authenticationConfiguration = authenticationConfiguration;
-        this.jwtUtil = jwtUtil;
-    }
+        // 필터 설정 ✅
+        http.addFilterAt(new JwtAuthenticationFilter(authenticationManager, jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtRequestFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
-    //AuthenticationManager Bean 등록
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-
-        return configuration.getAuthenticationManager();
-    }
-
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors((corsCustomizer -> corsCustomizer.configurationSource(new CorsConfigurationSource() {
-                    @Override
-                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-
-                        CorsConfiguration configuration = new CorsConfiguration();
-
-                        configuration.addAllowedOriginPattern("*");
-                        configuration.setAllowedMethods(Collections.singletonList("*"));
-                        configuration.setAllowCredentials(true);
-                        configuration.setAllowedHeaders(Collections.singletonList("*"));
-                        configuration.setMaxAge(3600L);
-
-                        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
-
-                        return configuration;
-                    }
-                })));
-        //csrf disable
-        http.csrf((auth) -> auth.disable());
-
-        //From 로그인 방식 disable
-        http.formLogin((auth) -> auth.disable());
-
-        //http basic 인증 방식 disable
-        http.httpBasic((auth) -> auth.disable());
-
-        //경로별 인가 작업
-        http.authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/member/**","/").permitAll()
+        // 인가 설정 ✅
+        http.authorizeHttpRequests( authorizeRequests ->
+                authorizeRequests
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/api/member/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("A")
-                        .anyRequest().authenticated());
-
-        http.addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
-
-        //필터 추가 LoginFilter()는 인자를 받음 (AuthenticationManager() 메소드에 authenticationConfiguration 객체를 넣어야 함) 따라서 등록 필요
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration),jwtUtil);
-        loginFilter.setFilterProcessesUrl("/api/member/login");
-        http.addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
-
-        //세션 설정
-        http.sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                        .anyRequest().authenticated()
+        );
+        // 인증 방식 설정 ✅
+        http.userDetailsService(customMemberDetailsService);
 
         return http.build();
     }
+
+
+    // PasswordEncoder 빈 등록
+    // 암호화 알고리즘 방식: Bcrypt
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+
+    // AuthenticationManager 빈 등록
+    private AuthenticationManager authenticationManager;
+
+    @Bean
+    public AuthenticationManager authenticationManager
+            (AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        this.authenticationManager = authenticationConfiguration.getAuthenticationManager();
+        return authenticationManager;
+    }
+
 
 }
 
